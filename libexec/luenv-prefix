@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+set -e
+[ -n "$LUENV_DEBUG" ] && set -x
+
+# Provide luenv completions
+if [ "$1" = "--complete" ]; then
+  echo system
+  exec luenv-versions --bare
+fi
+
+if [ -n "$1" ]; then
+  export LUENV_VERSION="$1"
+elif [ -z "$LUENV_VERSION" ]; then
+  LUENV_VERSION="$(luenv-version-name)"
+fi
+
+if [ "$LUENV_VERSION" = "system" ]; then
+  LUA_PATH="$(luenv-which lua)"
+  echo "${LUA_PATH%/*}"
+  exit
+fi
+
+LUENV_PREFIX_PATH="${LUENV_ROOT}/versions/${LUENV_VERSION}"
+if [ ! -d "$LUENV_PREFIX_PATH" ]; then
+  echo "luenv: version \`${LUENV_VERSION}' not installed" >&2
+  exit 1
+fi
+
+echo "$LUENV_PREFIX_PATH"

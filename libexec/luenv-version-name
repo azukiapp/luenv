@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+set -e
+[ -n "$LUENV_DEBUG" ] && set -x
+
+if [ -z "$LUENV_VERSION" ]; then
+  LUENV_VERSION_FILE="$(luenv-version-file)"
+  LUENV_VERSION="$(luenv-version-file-read "$LUENV_VERSION_FILE" || true)"
+fi
+
+if [ -z "$LUENV_VERSION" ] || [ "$LUENV_VERSION" = "system" ]; then
+  echo "system"
+  exit
+fi
+
+LUENV_VERSION_PATH="${LUENV_ROOT}/versions/${LUENV_VERSION}"
+
+if [ -d "$LUENV_VERSION_PATH" ]; then
+  echo "$LUENV_VERSION"
+else
+  echo "luenv: version \`$LUENV_VERSION' is not installed" >&2
+  exit 1
+fi

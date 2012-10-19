@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+set -e
+[ -n "$LUENV_DEBUG" ] && set -x
+
+# Provide luenv completions
+if [ "$1" = "--complete" ]; then
+  echo --unset
+  echo system
+  exec luenv-versions --bare
+fi
+
+version="$1"
+
+if [ -z "$version" ]; then
+  if [ -z "$LUENV_VERSION" ]; then
+    echo "luenv: no shell-specific version configured" >&2
+    exit 1
+  else
+    echo "echo \"\$LUENV_VERSION\""
+    exit
+  fi
+fi
+
+if [ "$version" = "--unset" ]; then
+  echo "unset LUENV_VERSION"
+  exit 1
+fi
+
+# Make sure the specified version is installed.
+luenv-prefix "$version" >/dev/null
+
+echo "export LUENV_VERSION=\"${version}\""

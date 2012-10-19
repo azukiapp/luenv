@@ -1,0 +1,74 @@
+#!/usr/bin/env bash
+set -e
+[ -n "$LUENV_DEBUG" ] && set -x
+
+# Provide luenv completions
+if [ "$1" = "--complete" ]; then
+  exec luenv shims --short
+fi
+
+expand_path() {
+  if [ ! -d "$1" ]; then
+    return 1
+  fi
+
+  local cwd="$(pwd)"
+  cd "$1"
+  pwd
+  cd "$cwd"
+}
+
+remove_from_path() {
+  local path_to_remove="$(expand_path "$1")"
+  local result=""
+
+  if [ -z "$path_to_remove" ]; then
+    echo "${PATH}"
+    return
+  fi
+
+  for path in ${PATH//:/$'\n'}; do
+    path="$(expand_path "$path" || true)"
+    if [ -n "$path" ] && [ "$path" != "$path_to_remove" ]; then
+      result="${result}${path}:"
+    fi
+  done
+
+  echo "${result%:}"
+}
+
+LUENV_VERSION="$(luenv-version-name)"
+LUENV_COMMAND="$1"
+
+if [ -z "$LUENV_COMMAND" ]; then
+  echo "usage: luenv which COMMAND" >&2
+  exit 1
+fi
+
+if [ "$LUENV_VERSION" = "system" ]; then
+  PATH="$(remove_from_path "${LUENV_ROOT}/shims")"
+  LUENV_COMMAND_PATH="$(command -v "$LUENV_COMMAND")"
+else
+  LUENV_COMMAND_PATH="${LUENV_ROOT}/versions/${LUENV_VERSION}/bin/${LUENV_COMMAND}"
+fi
+
+for script in $(luenv-hooks which); do
+  source "$script"
+done
+
+if [ -x "$LUENV_COMMAND_PATH" ]; then
+  echo "$LUENV_COMMAND_PATH"
+else
+  echo "luenv: $LUENV_COMMAND: command not found" >&2
+
+  versions="$(luenv-whence "$LUENV_COMMAND" || true)"
+  if [ -n "$versions" ]; then
+    { echo
+      echo "The \`$1' command exists in these Lua versions:"
+      echo "$versions" | sed 's/^/  /g'
+      echo
+    } >&2
+  fi
+
+  exit 127
+fi

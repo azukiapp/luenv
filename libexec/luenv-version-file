@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+set -e
+[ -n "$LUENV_DEBUG" ] && set -x
+
+root="$LUENV_DIR"
+while [ -n "$root" ]; do
+  if [ -e "${root}/.luenv-version" ]; then
+    echo "${root}/.luenv-version"
+    exit
+  fi
+  root="${root%/*}"
+done
+
+global_version_file="${LUENV_ROOT}/version"
+
+if [ -e "$global_version_file" ]; then
+  echo "$global_version_file"
+elif [ -e "${LUENV_ROOT}/global" ]; then
+  echo "${LUENV_ROOT}/global"
+elif [ -e "${LUENV_ROOT}/default" ]; then
+  echo "${LUENV_ROOT}/default"
+else
+  echo "$global_version_file"
+fi

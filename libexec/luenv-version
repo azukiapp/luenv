@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+set -e
+[ -n "$LUENV_DEBUG" ] && set -x
+
+echo "$(luenv-version-name) (set by $(luenv-version-origin))"

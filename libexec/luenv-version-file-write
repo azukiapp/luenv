@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+set -e
+[ -n "$LUENV_DEBUG" ] && set -x
+
+LUENV_VERSION_FILE="$1"
+LUENV_VERSION="$2"
+
+if [ -z "$LUENV_VERSION" ] || [ -z "$LUENV_VERSION_FILE" ]; then
+  echo "usage: luenv write-version-file FILENAME VERSION" >&2
+  exit 1
+fi
+
+# Make sure the specified version is installed.
+luenv-prefix "$LUENV_VERSION" >/dev/null
+
+# Write the version out to disk.
+echo "$LUENV_VERSION" > "$LUENV_VERSION_FILE"

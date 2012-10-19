@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+set -e
+[ -n "$LUENV_DEBUG" ] && set -x
+
+LUENV_VERSION_NAME="$(luenv-version-name)"
+
+if [ "$1" = "--bare" ]; then
+  hit_prefix=""
+  miss_prefix=""
+  print_version="$LUENV_VERSION_NAME"
+else
+  hit_prefix="* "
+  miss_prefix="  "
+  print_version="$(luenv-version)"
+fi
+
+for path in "${LUENV_ROOT}/versions/"*; do
+  if [ -d "$path" ]; then
+    version="${path##*/}"
+
+    if [ "$version" == "$LUENV_VERSION_NAME" ]; then
+      echo "${hit_prefix}${print_version}"
+    else
+      echo "${miss_prefix}${version}"
+    fi
+  fi
+done

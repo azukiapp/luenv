@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+set -e
+[ -n "$LUENV_DEBUG" ] && set -x
+
+# Provide luenv completions
+if [ "$1" = "--complete" ]; then
+  echo system
+  exec luenv-versions --bare
+fi
+
+LUENV_VERSION="$1"
+LUENV_VERSION_FILE="${LUENV_ROOT}/version"
+
+if [ -n "$LUENV_VERSION" ]; then
+  luenv-version-file-write "$LUENV_VERSION_FILE" "$LUENV_VERSION"
+else
+  luenv-version-file-read "$LUENV_VERSION_FILE" ||
+  luenv-version-file-read "${LUENV_ROOT}/global" ||
+  luenv-version-file-read "${LUENV_ROOT}/default" ||
+  echo system
+fi

@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+set -e
+[ -n "$LUENV_DEBUG" ] && set -x
+
+# Provide luenv completions
+if [ "$1" = "--complete" ]; then
+  echo --path
+  exec luenv shims --short
+fi
+
+if [ "$1" = "--path" ]; then
+  print_paths="1"
+  shift
+else
+  print_paths=""
+fi
+
+whence() {
+  local command="$1"
+  luenv-versions --bare | while read version; do
+    path="$(luenv-prefix "$version")/bin/${command}"
+    if [ -x "$path" ]; then
+      [ "$print_paths" ] && echo "$path" || echo "$version"
+    fi
+  done
+}
+
+LUENV_COMMAND="$1"
+if [ -z "$LUENV_COMMAND" ]; then
+  echo "usage: luenv whence [--path] COMMAND" >&2
+  exit 1
+fi
+
+result="$(whence "$LUENV_COMMAND")"
+[ -n "$result" ] && echo "$result"
