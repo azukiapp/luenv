@@ -1,0 +1,75 @@
+#!/usr/bin/env bash
+set -e
+[ -n "$LUENV_DEBUG" ] && set -x
+
+resolve_link() {
+  $(type -p greadlink readlink | head -1) "$1"
+}
+
+abs_dirname() {
+  local cwd="$(pwd)"
+  local path="$1"
+
+  while [ -n "$path" ]; do
+    cd "${path%/*}"
+    local name="${path##*/}"
+    path="$(resolve_link "$name" || true)"
+  done
+
+  pwd
+  cd "$cwd"
+}
+
+if [ -z "${LUENV_ROOT}" ]; then
+  LUENV_ROOT="${HOME}/.luenv"
+else
+  LUENV_ROOT="${LUENV_ROOT%/}"
+fi
+export LUENV_ROOT
+
+if [ -z "${LUENV_DIR}" ]; then
+  LUENV_DIR="$(pwd)"
+else
+  cd "$LUENV_DIR" 2>/dev/null || {
+    echo "luenv: cannot change working directory to \`$LUENV_DIR'"
+    exit 1
+  } >&2
+  LUENV_DIR="$(pwd)"
+  cd "$OLDPWD"
+fi
+export LUENV_DIR
+
+
+shopt -s nullglob
+
+bin_path="$(abs_dirname "$0")"
+for plugin_bin in "${LUENV_ROOT}/plugins/"*/bin; do
+  bin_path="${bin_path}:${plugin_bin}"
+done
+export PATH="${bin_path}:${PATH}"
+
+hook_path="${LUENV_HOOK_PATH}:${LUENV_ROOT}/luenv.d:/usr/local/etc/luenv.d:/etc/luenv.d"
+for plugin_hook in "${LUENV_ROOT}/plugins/"*/etc/luenv.d; do
+  hook_path="${hook_path}:${plugin_hook}"
+done
+export LUENV_HOOK_PATH="$hook_path"
+
+shopt -u nullglob
+
+
+command="$1"
+case "$command" in
+"" | "-h" | "--help" )
+  echo -e "luenv 0.0.1\n$(luenv-help)" >&2
+  ;;
+* )
+  command_path="$(command -v "luenv-$command" || true)"
+  if [ -z "$command_path" ]; then
+    echo "luenv: no such command \`$command'" >&2
+    exit 1
+  fi
+
+  shift 1
+  exec "$command_path" "$@"
+  ;;
+esac

@@ -1,0 +1,98 @@
+#!/usr/bin/env bash
+set -e
+[ -n "$LUENV_DEBUG" ] && set -x
+
+print=""
+if [ "$1" = "-" ]; then
+  print=1
+  shift
+fi
+
+no_rehash=""
+if [ "$1" = "--no-rehash" ]; then
+  no_rehash=1
+  shift
+fi
+
+shell="$1"
+if [ -z "$shell" ]; then
+  shell="$(basename "$SHELL")"
+fi
+
+resolve_link() {
+  $(type -p greadlink readlink | head -1) $1
+}
+
+abs_dirname() {
+  local cwd="$(pwd)"
+  local path="$1"
+
+  while [ -n "$path" ]; do
+    cd "${path%/*}"
+    local name="${path##*/}"
+    path="$(resolve_link "$name" || true)"
+  done
+
+  pwd
+  cd "$cwd"
+}
+
+root="$(abs_dirname "$0")/.."
+
+if [ -z "$print" ]; then
+  case "$shell" in
+  bash )
+    profile='~/.bash_profile'
+    ;;
+  zsh )
+    profile='~/.zshrc'
+    ;;
+  ksh )
+    profile='~/.profile'
+    ;;
+  * )
+    profile='your profile'
+    ;;
+  esac
+
+  { echo "# Load luenv automatically by adding"
+    echo "# the following to ${profile}:"
+    echo
+    echo 'eval "$(luenv init -)"'
+    echo
+  } >&2
+
+  exit 1
+fi
+
+mkdir -p "${LUENV_ROOT}/"{shims,versions}
+
+echo 'export PATH="'${LUENV_ROOT}'/shims:${PATH}"'
+
+case "$shell" in
+bash | zsh )
+  echo "source \"$root/completions/luenv.${shell}\""
+  ;;
+esac
+
+if [ -z "$no_rehash" ]; then
+  echo 'luenv rehash 2>/dev/null'
+fi
+
+commands=(`luenv commands --sh`)
+IFS="|"
+cat <<EOS
+luenv() {
+  command="\$1"
+  if [ "\$#" -gt 0 ]; then
+    shift
+  fi
+
+  case "\$command" in
+  ${commands[*]})
+    eval \`luenv "sh-\$command" "\$@"\`;;
+  *)
+    command luenv "\$command" "\$@";;
+  esac
+}
+EOS
