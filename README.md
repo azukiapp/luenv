@@ -4,7 +4,7 @@ luenv lets you easily switch between multiple versions of Lua. It's
 simple, unobtrusive, and follows the UNIX tradition of single-purpose
 tools that do one thing well.
 
-This project is based on project [luenv](http://github.com/azukiapp/luenv).
+This project is based on project [rbenv](https://github.com/sstephenson/rbenv).
 
 ### luenv _does…_
 
@@ -81,7 +81,7 @@ easy to fork and contribute any changes back upstream.
    $ ln -s $PREFIX/bin/luvit $PREFIX/bin/lua
    ```
 
-   **Compatibility note 1**: In contrast with [rbenv](http://github.com/azukiapp/luenv)
+   **Compatibility note 1**: In contrast with [rbenv](https://github.com/sstephenson/rbenv)
    install Lua VM versions in `~/.luenv/versions` is more complicated.
    Actual version of Lua does not option to set PREFIX in make phase.
 
